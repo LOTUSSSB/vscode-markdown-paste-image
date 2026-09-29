@@ -11,11 +11,20 @@ class Predefine {
   _fileExtname: string;
   _fileBasenameNoExtension: string;
   _fileDirname: string;
+  private _editor?: vscode.TextEditor;
+  private _selection?: vscode.Selection;
 
-  constructor(fileUri?: vscode.Uri, workspaceFolderUri?: vscode.Uri) {
+  constructor(
+    fileUri?: vscode.Uri,
+    workspaceFolderUri?: vscode.Uri,
+    editor?: vscode.TextEditor,
+    selection?: vscode.Selection
+  ) {
     // prioritize using the passed‑in fileUri; if none is provided, then fall back to the currently active editor (the original logic).
-    let editor = vscode.window.activeTextEditor;
-    const targetUri = fileUri ?? editor?.document.uri;
+    const activeEditor = editor ?? vscode.window.activeTextEditor;
+    this._editor = activeEditor;
+    this._selection = selection;
+    const targetUri = fileUri ?? activeEditor?.document.uri;
 
     const targetFolderUri =
       workspaceFolderUri ??
@@ -171,9 +180,10 @@ class Predefine {
    *  defaultText : if selected text contain illegal characters or empty
    */
   public selectedText(defaultText: string = ""): string {
-    const selection = vscode.window.activeTextEditor.selection;
-    const selectText =
-      vscode.window.activeTextEditor.document.getText(selection);
+    const editor = this._editor ?? vscode.window.activeTextEditor;
+    if (!editor) return defaultText;
+    const selection = this._selection ?? editor.selection;
+    const selectText = editor.document.getText(selection);
 
     if (selectText && !/^[^\\/:\*\?""<>|\r\n]*$/.test(selectText)) {
       vscode.window.showInformationMessage(
@@ -192,8 +202,17 @@ class Predefine {
    * @param str path
    * @returns
    */
-  static replacePredefinedVars(str: string) {
-    let predefine = new Predefine();
+  static replacePredefinedVars(
+    str: string,
+    editor?: vscode.TextEditor,
+    selection?: vscode.Selection
+  ) {
+    let predefine = new Predefine(
+      editor?.document.uri,
+      undefined,
+      editor,
+      selection
+    );
     return Predefine.replaceRegPredefinedVars(str, predefine);
   }
 

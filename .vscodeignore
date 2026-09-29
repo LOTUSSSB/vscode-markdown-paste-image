@@ -1,4 +1,5 @@
 .vscode/**
+*.vsix
 typings/**
 out/test/**
 out/src/**

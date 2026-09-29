@@ -7,12 +7,17 @@ import {
 import { Predefine } from "./predefine";
 import Logger from "./Logger";
 import { ToolsManager } from "./ToolsManager";
+import * as vscode from "vscode";
 
 export class AIPaster {
   private client: OpenAI;
   private toolsManager: ToolsManager;
+  private editor?: vscode.TextEditor;
+  private selection?: vscode.Selection;
 
-  constructor() {
+  constructor(editor?: vscode.TextEditor, selection?: vscode.Selection) {
+    this.editor = editor;
+    this.selection = selection;
     this.client = new OpenAI(this.config.openaiConnectOption);
     this.toolsManager = new ToolsManager();
     this.toolsManager.registerDefaultTools();
@@ -24,7 +29,7 @@ export class AIPaster {
   }
 
   public get config() {
-    return Paster.getConfig();
+    return Paster.getConfig(this.editor);
   }
 
   private async runCompletion(completion) {
@@ -104,7 +109,9 @@ export class AIPaster {
         const path = require("path");
         const openaiCompletionTemplateFile = path.resolve(
           Predefine.replacePredefinedVars(
-            this.config.openaiCompletionTemplateFile
+            this.config.openaiCompletionTemplateFile,
+            this.editor,
+            this.selection
           )
         );
         if (fs.existsSync(openaiCompletionTemplateFile)) {
